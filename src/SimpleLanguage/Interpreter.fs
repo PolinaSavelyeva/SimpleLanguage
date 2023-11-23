@@ -6,28 +6,22 @@ open SimpleLanguage.AST
 let rec evaluateExpression (context: Dictionary<_, _>) expression =
     match expression with
     | Number number -> number
-    | Mult list ->
-        list
-        |> List.map (evaluateExpression context)
-        |> List.reduce (*)
-    | Add list ->
-        list
-        |> List.map (evaluateExpression context)
-        |> List.reduce (+)
-    | Var variableName ->
+    | Mult listOfExpressions -> listOfExpressions |> List.map (evaluateExpression context) |> List.reduce (*)
+    | Add list -> list |> List.map (evaluateExpression context) |> List.reduce (+)
+    | Variable variableName ->
         if context.ContainsKey variableName then
             context[variableName]
         else
-            failwithf $"Var with name {variableName} not declared."
+            failwithf $"Variable with name {variableName} not declared."
 
 let rec evaluateStatement context statement =
     match statement with
-    | Asgn(variableName, expression) -> Some(variableName, evaluateExpression context expression)
+    | Assignment(variableName, expression) -> Some(variableName, evaluateExpression context expression)
     | Print expression ->
         printfn $"{evaluateExpression context expression}"
         None
 
-let evaluateProgram (statements: list<sourceAst>) =
+let evaluateAST (statements: AST) =
     let context = Dictionary<string, int>()
 
     List.fold
@@ -42,8 +36,9 @@ let evaluateProgram (statements: list<sourceAst>) =
                     context.Add(variableName, result)
             | None -> ()
 
-            context
-        )
+            context)
         context
         statements
     |> ignore
+
+// let evaluateProgram (program: list<char>) =

@@ -1,11 +1,13 @@
 module SimpleLanguage.AST
 
-type sourceExpr =
+type Expression =
     | Number of int
-    | Mult of list<sourceExpr>
-    | Add of list<sourceExpr>
-    | Var of string
+    | Mult of list<Expression>
+    | Add of list<Expression>
+    | Variable of string
 
-type sourceAst =
-    | Asgn of string * sourceExpr
-    | Print of sourceExpr
+type Statement =
+    | Assignment of variableName: string * expression: Expression
+    | Print of Expression
+
+type AST = list<Statement>
