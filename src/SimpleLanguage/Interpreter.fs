@@ -17,9 +17,19 @@ type CustomBox =
     member this.IsInt = this.Type = "int"
     member this.IsBool = this.Type = "bool"
 
+let comparativeSymbolParse (symbol: string) =
+    match symbol with
+    | ">" -> (>)
+    | "<" -> (<)
+    | ">=" -> (>=)
+    | "<=" -> (<=)
+    | "==" -> (=)
+    | "!=" -> (<>)
+    | _ -> failwithf $"Unknown comparative symbol {symbol}."
+
 let rec evaluateExpression (context: Dictionary<_, _>) expression =
     let intMapping =
-        (fun (expression) ->
+        (fun expression ->
             let boxedExpression: CustomBox = evaluateExpression context expression
 
             if boxedExpression.IsInt then
@@ -48,6 +58,21 @@ let rec evaluateExpression (context: Dictionary<_, _>) expression =
             failwithf $"Variable with name {variableName} not declared."
     | And listOfExpressions -> listOfExpressions |> List.map boolMapping |> List.reduce (&&) |> CustomBox
     | Or listOfExpressions -> listOfExpressions |> List.map boolMapping |> List.reduce (||) |> CustomBox
+    | Compare(comparativeSymbol, listOfExpressions) ->
+
+        let rec inner comparativeSymbol (list: int list) =
+            match list with
+            | hd1 :: hd2 :: [] -> comparativeSymbol hd1 hd2
+            | _ -> failwith "Non empty list expected."
+
+        try
+            List.map intMapping listOfExpressions
+            |> inner (comparativeSymbolParse comparativeSymbol)
+            |> CustomBox
+        with _ ->
+            List.map boolMapping listOfExpressions
+            |> List.reduce (comparativeSymbolParse comparativeSymbol)
+            |> CustomBox
 
 let evaluateAST (statements: AST) =
     let context = Dictionary<string, CustomBox>()

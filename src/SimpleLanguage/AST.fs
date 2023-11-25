@@ -8,6 +8,7 @@ type Expression =
     | Variable of string
     | And of list<Expression>
     | Or of list<Expression>
+    | Compare of comparisonSymbol: string * list<Expression>
 
 type Statement =
     | Assignment of variableName: string * expression: Expression

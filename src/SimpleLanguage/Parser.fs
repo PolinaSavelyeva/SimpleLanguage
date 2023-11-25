@@ -24,6 +24,22 @@ let multParser =
 let addParser =
     makeListParser multParser (makeIgnoreParser (makeCharParser '+')) |> mapParser Add
 
+let lessParser = makeKeywordParser "<"
+let lessThanOrEqual = makeKeywordParser "<="
+let greaterParser = makeKeywordParser ">"
+let greaterThanOrEqual = makeKeywordParser ">="
+let equalParser = makeKeywordParser "=="
+let notEqualParser = makeKeywordParser "!="
+
+let rec compareParser input =
+    let mutable comparisonSymbol = ""
+
+    makeListParser
+        addParser
+        (mapParser (fun result -> comparisonSymbol <- result) (composeAlternativeParser [ lessParser; lessThanOrEqual; greaterParser; greaterThanOrEqual; equalParser; notEqualParser ]))
+    |> mapParser (fun result -> Compare(comparisonSymbol, result))
+    <| input
+
 let andParser =
     makeListParser (makeAlternativeParser booleanParser (mapParser Variable stringParser)) (makeIgnoreParser (makeKeywordParser "and"))
     |> mapParser And
@@ -40,7 +56,7 @@ let printParser =
 let rec conditionParser input =
     bindParsers (makeKeywordParser "if") (fun _ ->
         bindParsers (makeCharParser ':') (fun _ ->
-            bindParsers orParser (fun condition ->
+            bindParsers (makeAlternativeParser orParser compareParser) (fun condition ->
                 mapParser (fun thenAndElseBranchesResult -> condition, thenAndElseBranchesResult)
                 <| bindParsers (makeKeywordParser "then") (fun _ ->
                     bindParsers (makeCharParser ':') (fun _ ->
