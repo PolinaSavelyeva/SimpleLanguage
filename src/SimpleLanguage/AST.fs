@@ -2,6 +2,7 @@ module SimpleLanguage.AST
 
 type Expression =
     | Number of int
+    | Boolean of bool
     | Mult of list<Expression>
     | Add of list<Expression>
     | Variable of string

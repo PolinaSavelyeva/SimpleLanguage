@@ -13,6 +13,10 @@ let numberParser =
         (bindParsers (satisfyPredicate (fun x -> List.contains x [ '0' .. '9' ])) (fun digit -> reverseParser [ digit ] (satisfyPredicate (fun x -> List.contains x [ '0' .. '9' ]))))
     |> mapParser (fun res -> res |> Array.ofList |> System.String |> int |> Number)
 
+let booleanParser =
+    makeAlternativeParser (makeKeywordParser "true") (makeKeywordParser "false")
+    |> mapParser (fun res -> res |> System.Convert.ToBoolean |> Boolean)
+
 let multParser =
     makeListParser (makeAlternativeParser numberParser (mapParser Variable stringParser)) (makeIgnoreParser (makeCharParser '*'))
     |> mapParser Mult
