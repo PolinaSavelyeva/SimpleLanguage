@@ -24,6 +24,13 @@ let multParser =
 let addParser =
     makeListParser multParser (makeIgnoreParser (makeCharParser '+')) |> mapParser Add
 
+let andParser =
+    makeListParser (makeAlternativeParser booleanParser (mapParser Variable stringParser)) (makeIgnoreParser (makeKeywordParser "and"))
+    |> mapParser And
+
+let orParser =
+    makeListParser andParser (makeIgnoreParser (makeKeywordParser "or")) |> mapParser Or
+
 let assignmentParser =
     bindParsers stringParser (fun variableName -> bindParsers (makeIgnoreParser (makeCharParser '=')) (fun _ -> mapParser (fun expression -> Assignment(variableName, expression)) addParser))
 
@@ -33,7 +40,7 @@ let printParser =
 let rec conditionParser input =
     bindParsers (makeKeywordParser "if") (fun _ ->
         bindParsers (makeCharParser ':') (fun _ ->
-            bindParsers addParser (fun condition ->
+            bindParsers orParser (fun condition ->
                 mapParser (fun thenAndElseBranchesResult -> condition, thenAndElseBranchesResult)
                 <| bindParsers (makeKeywordParser "then") (fun _ ->
                     bindParsers (makeCharParser ':') (fun _ ->

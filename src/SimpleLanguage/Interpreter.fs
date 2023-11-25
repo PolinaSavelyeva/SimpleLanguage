@@ -4,36 +4,36 @@ open System.Collections.Generic
 open SimpleLanguage.AST
 
 let rec evaluateExpression (context: Dictionary<_, _>) expression =
-    match expression with
-    | Number number -> number, "int"
-    | Boolean boolean -> System.Convert.ToInt32 boolean, "bool"
-    | Mult listOfExpressions ->
-        (listOfExpressions
-         |> List.map (fun expression ->
-             let expressionValue, expressionType = evaluateExpression context expression
-
-             if expressionType = "int" then
-                 expressionValue
-             else
-                 failwith "Expected int type in multiplication.")
-         |> List.reduce (*)),
-        "int"
-    | Add listOfExpressions ->
-        listOfExpressions
-        |> List.map (fun expression ->
+    let intMapping =
+        (fun expression ->
             let expressionValue, expressionType = evaluateExpression context expression
 
             if expressionType = "int" then
                 expressionValue
             else
-                failwith "Expected int type in addition.")
-        |> List.reduce (+),
-        "int"
+                failwith $"Expected int type as argument in %A{expression} expression.")
+
+    let boolMapping =
+        (fun expression ->
+            let expressionValue, expressionType = evaluateExpression context expression
+
+            if expressionType = "bool" then
+                expressionValue = 1
+            else
+                failwith $"Expected bool type as argument in %A{expression} expression.")
+
+    match expression with
+    | Number number -> number, "int"
+    | Boolean boolean -> System.Convert.ToInt32 boolean, "bool"
+    | Mult listOfExpressions -> listOfExpressions |> List.map intMapping |> List.reduce (*), "int"
+    | Add listOfExpressions -> listOfExpressions |> List.map intMapping |> List.reduce (+), "int"
     | Variable variableName ->
         if context.ContainsKey variableName then
             context[variableName]
         else
             failwithf $"Variable with name {variableName} not declared."
+    | And listOfExpressions -> listOfExpressions |> List.map boolMapping |> List.reduce (&&) |> System.Convert.ToInt32, "bool"
+    | Or listOfExpressions -> listOfExpressions |> List.map boolMapping |> List.reduce (||) |> System.Convert.ToInt32, "bool"
 
 let evaluateAST (statements: AST) =
     let context = Dictionary<string, int * string>()
@@ -50,7 +50,7 @@ let evaluateAST (statements: AST) =
                     printfn $"{expressionValue}"
                     None
                 else
-                    printfn $"{System.Convert.ToBoolean expressionValue}"
+                    printfn $"{expressionValue = 1}"
                     None
             | Condition(condition, (thenBranch, elseBranch)) ->
                 let conditionValue, conditionType = evaluateExpression context condition

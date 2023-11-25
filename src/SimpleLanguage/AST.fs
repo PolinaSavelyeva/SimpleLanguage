@@ -6,6 +6,8 @@ type Expression =
     | Mult of list<Expression>
     | Add of list<Expression>
     | Variable of string
+    | And of list<Expression>
+    | Or of list<Expression>
 
 type Statement =
     | Assignment of variableName: string * expression: Expression
