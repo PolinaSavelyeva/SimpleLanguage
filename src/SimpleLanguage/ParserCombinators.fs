@@ -25,6 +25,9 @@ let makeAlternativeParser (parser1: Parser<'result>) (parser2: Parser<'result>) 
         | None -> parser2 charList
         | parserResult -> parserResult
 
+let composeAlternativeParser (parsers: Parser<'result> list) : Parser<'result> =
+    List.reduce makeAlternativeParser parsers
+
 let mapParser (mapping: 'result1 -> 'result2) (parser: Parser<'result1>) : Parser<'result2> =
     fun charList ->
         match parser charList with
@@ -43,8 +46,8 @@ let rec manyParser (parser: Parser<'result>) : Parser<list<'result>> =
 let someParser (parser: Parser<'result>) : Parser<list<'result>> =
     bindParsers parser (fun result -> mapParser (fun tl -> result :: tl) (manyParser parser))
 
-let makeListParser (elementParser: Parser<'element>) (epsilonParser: Parser<unit>) : Parser<list<'element>> =
-    bindParsers elementParser (fun element -> mapParser (fun tl -> element :: tl) (manyParser (bindParsers epsilonParser (fun _ -> elementParser))))
+let makeListParser (parser: Parser<'result>) (epsilonParser: Parser<unit>) : Parser<list<'result>> =
+    bindParsers parser (fun result -> mapParser (fun tl -> result :: tl) (manyParser (bindParsers epsilonParser (fun _ -> parser))))
 
 let makeIgnoreParser parser = mapParser (fun _ -> ()) parser
 

@@ -3,15 +3,6 @@ module SimpleLanguage.Interpreter
 open System.Collections.Generic
 open SimpleLanguage.AST
 
-let parseCompareOperator (operator: CompareOperator) =
-    match operator with
-    | Equal -> (=)
-    | NotEqual -> (<>)
-    | LessThan -> (<)
-    | LessThanOrEqual -> (<=)
-    | GreaterThan -> (>)
-    | GreaterThanOrEqual -> (>=)
-
 let rec evaluateExpression (context: Dictionary<_, _>) expression =
     match expression with
     | Number number -> number
@@ -22,10 +13,6 @@ let rec evaluateExpression (context: Dictionary<_, _>) expression =
             context[variableName]
         else
             failwithf $"Variable with name {variableName} not declared."
-    | Compare(left, operator, right) ->
-        evaluateExpression context left
-        |> (parseCompareOperator operator) (evaluateExpression context right)
-        |> System.Convert.ToInt32
 
 let evaluateAST (statements: AST) =
     let context = Dictionary<string, int>()
@@ -38,7 +25,7 @@ let evaluateAST (statements: AST) =
             | Print expression ->
                 printfn $"{evaluateExpression context expression}"
                 None
-            | Condition(condition, thenBranch, elseBranch) ->
+            | Condition(condition, (thenBranch, elseBranch)) ->
                 if evaluateExpression context condition = 1 then
                     inner thenBranch
                 else
@@ -64,5 +51,3 @@ let evaluateAST (statements: AST) =
         |> ignore
 
     inner statements
-
-// let evaluateProgram (program: list<char>) =

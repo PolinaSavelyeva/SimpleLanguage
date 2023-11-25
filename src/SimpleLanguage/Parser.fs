@@ -8,7 +8,6 @@ let stringParser: Parser<string> =
     |> mapParser (fun res -> res |> Array.ofList |> System.String)
 
 let numberParser =
-    bindParsers (satisfyPredicate (fun x -> List.contains x [ '1' .. '9' ])) (fun res -> mapParser (fun tl -> res :: tl) (manyParser (satisfyPredicate (fun x -> List.contains x [ '0' .. '9' ]))))
     makeAlternativeParser
         (bindParsers (satisfyPredicate (fun x -> List.contains x [ '1' .. '9' ])) (fun res -> mapParser (fun tl -> res :: tl) (manyParser (satisfyPredicate (fun x -> List.contains x [ '0' .. '9' ])))))
         (bindParsers (satisfyPredicate (fun x -> List.contains x [ '0' .. '9' ])) (fun digit -> reverseParser [ digit ] (satisfyPredicate (fun x -> List.contains x [ '0' .. '9' ]))))
@@ -24,10 +23,28 @@ let addParser =
 let assignmentParser =
     bindParsers stringParser (fun variableName -> bindParsers (makeIgnoreParser (makeCharParser '=')) (fun _ -> mapParser (fun expression -> Assignment(variableName, expression)) addParser))
 
-let printParser = makeKeywordParser "print"
+let printParser =
+    bindParsers (makeKeywordParser "print") (fun _ -> bindParsers (makeCharParser ':') (fun _ -> mapParser Print addParser))
 
-let statementParser =
-    bindParsers printParser (fun _ -> bindParsers (makeCharParser ':') (fun _ -> mapParser Print addParser))
+let rec conditionParser input =
+    bindParsers (makeKeywordParser "if") (fun _ ->
+        bindParsers (makeCharParser ':') (fun _ ->
+            bindParsers addParser (fun condition ->
+                mapParser (fun thenAndElseBranchesResult -> condition, thenAndElseBranchesResult)
+                <| bindParsers (makeKeywordParser "then") (fun _ ->
+                    bindParsers (makeCharParser ':') (fun _ ->
+                        bindParsers (makeCharParser '\n') (fun _ ->
+                            bindParsers (makeListParser (composeAlternativeParser [ conditionParser; printParser; assignmentParser ]) (makeIgnoreParser (makeCharParser '\n'))) (fun thenBranch ->
+                                mapParser (fun elseBranchResult -> thenBranch, elseBranchResult)
+                                <| bindParsers (makeCharParser '\n') (fun _ ->
+                                    bindParsers (makeKeywordParser "else") (fun _ ->
+                                        bindParsers (makeCharParser ':') (fun _ ->
+                                            bindParsers (makeCharParser '\n') (fun _ ->
+                                                (bindParsers
+                                                    (makeListParser (composeAlternativeParser [ conditionParser; printParser; assignmentParser ]) (makeIgnoreParser (makeCharParser '\n')))
+                                                    (fun beforeEndResult -> mapParser (fun _ -> beforeEndResult) (makeKeywordParser "end"))))))))))))))
+    |> mapParser Condition
+    <| input
 
 let programParser =
-    makeListParser (makeAlternativeParser statementParser assignmentParser) (makeIgnoreParser (makeCharParser '\n'))
+    makeListParser (composeAlternativeParser [ conditionParser; printParser; assignmentParser ]) (makeIgnoreParser (makeCharParser '\n'))
