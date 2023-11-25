@@ -17,17 +17,18 @@ type CustomBox =
     member this.IsInt = this.Type = "int"
     member this.IsBool = this.Type = "bool"
 
-let comparativeSymbolParse (symbol: string) =
-    match symbol with
-    | ">" -> (>)
-    | "<" -> (<)
-    | ">=" -> (>=)
-    | "<=" -> (<=)
-    | "==" -> (=)
-    | "!=" -> (<>)
-    | _ -> failwithf $"Unknown comparative symbol {symbol}."
-
 let rec evaluateExpression (context: Dictionary<_, _>) expression =
+
+    let comparativeSymbolParse (symbol: string) =
+        match symbol with
+        | ">" -> (>)
+        | "<" -> (<)
+        | ">=" -> (>=)
+        | "<=" -> (<=)
+        | "==" -> (=)
+        | "!=" -> (<>)
+        | _ -> failwithf $"Unknown comparative symbol {symbol}."
+
     let intMapping =
         (fun expression ->
             let boxedExpression: CustomBox = evaluateExpression context expression
@@ -63,7 +64,7 @@ let rec evaluateExpression (context: Dictionary<_, _>) expression =
         let rec inner comparativeSymbol (list: int list) =
             match list with
             | hd1 :: hd2 :: [] -> comparativeSymbol hd1 hd2
-            | _ -> failwith "Non empty list expected."
+            | _ -> failwith "Expected list of length 2."
 
         try
             List.map intMapping listOfExpressions
