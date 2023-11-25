@@ -3,40 +3,54 @@ module SimpleLanguage.Interpreter
 open System.Collections.Generic
 open SimpleLanguage.AST
 
+type CustomBox =
+    val Value: int
+    val Type: string
+
+    new(boxValue) = { Value = boxValue; Type = "int" }
+
+    new(boxBoolValue: bool) =
+        { Value = System.Convert.ToInt32 boxBoolValue
+          Type = "bool" }
+
+    member this.Unbox = System.Convert.ToInt32 this.Value
+    member this.IsInt = this.Type = "int"
+    member this.IsBool = this.Type = "bool"
+
 let rec evaluateExpression (context: Dictionary<_, _>) expression =
     let intMapping =
-        (fun expression ->
-            let expressionValue, expressionType = evaluateExpression context expression
+        (fun (expression) ->
+            let boxedExpression: CustomBox = evaluateExpression context expression
 
-            if expressionType = "int" then
-                expressionValue
+            if boxedExpression.IsInt then
+                boxedExpression.Value
             else
                 failwith $"Expected int type as argument in %A{expression} expression.")
 
     let boolMapping =
         (fun expression ->
-            let expressionValue, expressionType = evaluateExpression context expression
+            let boxedExpression = evaluateExpression context expression
 
-            if expressionType = "bool" then
-                expressionValue = 1
+            if boxedExpression.IsBool then
+                boxedExpression.Value = 1
             else
                 failwith $"Expected bool type as argument in %A{expression} expression.")
 
     match expression with
-    | Number number -> number, "int"
-    | Boolean boolean -> System.Convert.ToInt32 boolean, "bool"
-    | Mult listOfExpressions -> listOfExpressions |> List.map intMapping |> List.reduce (*), "int"
-    | Add listOfExpressions -> listOfExpressions |> List.map intMapping |> List.reduce (+), "int"
+    | Number number -> CustomBox number
+    | Boolean boolean -> CustomBox boolean
+    | Mult listOfExpressions -> listOfExpressions |> List.map intMapping |> List.reduce (*) |> CustomBox
+    | Add listOfExpressions -> listOfExpressions |> List.map intMapping |> List.reduce (+) |> CustomBox
     | Variable variableName ->
         if context.ContainsKey variableName then
             context[variableName]
         else
             failwithf $"Variable with name {variableName} not declared."
-    | And listOfExpressions -> listOfExpressions |> List.map boolMapping |> List.reduce (&&) |> System.Convert.ToInt32, "bool"
-    | Or listOfExpressions -> listOfExpressions |> List.map boolMapping |> List.reduce (||) |> System.Convert.ToInt32, "bool"
+    | And listOfExpressions -> listOfExpressions |> List.map boolMapping |> List.reduce (&&) |> CustomBox
+    | Or listOfExpressions -> listOfExpressions |> List.map boolMapping |> List.reduce (||) |> CustomBox
 
 let evaluateAST (statements: AST) =
-    let context = Dictionary<string, int * string>()
+    let context = Dictionary<string, CustomBox>()
 
     let rec inner (currentAST: AST) =
 
@@ -44,24 +58,24 @@ let evaluateAST (statements: AST) =
             match statement with
             | Assignment(variableName, expression) -> Some(variableName, evaluateExpression context expression)
             | Print expression ->
-                let expressionValue, expressionType = evaluateExpression context expression
+                let boxedExpression = evaluateExpression context expression
 
-                if expressionType = "int" then
-                    printfn $"{expressionValue}"
+                if boxedExpression.IsInt then
+                    printfn $"{boxedExpression.Value}"
                     None
                 else
-                    printfn $"{expressionValue = 1}"
+                    printfn $"{boxedExpression.Value = 1}"
                     None
             | Condition(condition, (thenBranch, elseBranch)) ->
-                let conditionValue, conditionType = evaluateExpression context condition
+                let boxedCondition = evaluateExpression context condition
 
-                if conditionType = "bool" then
-                    if conditionValue = 1 then
+                if boxedCondition.IsBool then
+                    if boxedCondition.Value = 1 then
                         inner thenBranch
                     else
                         inner elseBranch
                 else
-                    failwithf $"Condition must be of type bool."
+                    failwithf "Condition must be of type bool."
 
                 None
 

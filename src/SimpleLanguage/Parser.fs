@@ -15,7 +15,7 @@ let numberParser =
 
 let booleanParser =
     makeAlternativeParser (makeKeywordParser "true") (makeKeywordParser "false")
-    |> mapParser (fun res -> res |> System.Convert.ToBoolean |> Boolean)
+    |> mapParser (fun res -> Boolean(res = "true"))
 
 let multParser =
     makeListParser (makeAlternativeParser numberParser (mapParser Variable stringParser)) (makeIgnoreParser (makeCharParser '*'))
