@@ -31,6 +31,12 @@ let mapParser (mapping: 'result1 -> 'result2) (parser: Parser<'result1>) : Parse
         | None -> None
         | Some(restOfList, result) -> Some(restOfList, mapping result)
 
+let reverseParser (result2Value: 'result2) (parser: Parser<'result1>) : Parser<'result2> =
+    fun charList ->
+        match parser charList with
+        | None -> Some(charList, result2Value)
+        | _ -> None
+
 let rec manyParser (parser: Parser<'result>) : Parser<list<'result>> =
     makeAlternativeParser (bindParsers parser (fun result -> mapParser (fun tl -> result :: tl) (manyParser parser))) (mapParser (fun _ -> []) epsilonParser)
 

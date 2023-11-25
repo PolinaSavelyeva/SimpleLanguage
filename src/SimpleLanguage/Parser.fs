@@ -9,6 +9,9 @@ let stringParser: Parser<string> =
 
 let numberParser =
     bindParsers (satisfyPredicate (fun x -> List.contains x [ '1' .. '9' ])) (fun res -> mapParser (fun tl -> res :: tl) (manyParser (satisfyPredicate (fun x -> List.contains x [ '0' .. '9' ]))))
+    makeAlternativeParser
+        (bindParsers (satisfyPredicate (fun x -> List.contains x [ '1' .. '9' ])) (fun res -> mapParser (fun tl -> res :: tl) (manyParser (satisfyPredicate (fun x -> List.contains x [ '0' .. '9' ])))))
+        (bindParsers (satisfyPredicate (fun x -> List.contains x [ '0' .. '9' ])) (fun digit -> reverseParser [ digit ] (satisfyPredicate (fun x -> List.contains x [ '0' .. '9' ]))))
     |> mapParser (fun res -> res |> Array.ofList |> System.String |> int |> Number)
 
 let multParser =
