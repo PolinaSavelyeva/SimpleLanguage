@@ -75,7 +75,7 @@ let rec conditionParser input =
                                             bindParsers (makeCharParser '\n') (fun _ ->
                                                 (bindParsers
                                                     (makeListParser (composeAlternativeParser [ conditionParser; printParser; assignmentParser ]) (makeIgnoreParser (makeCharParser '\n')))
-                                                    (fun beforeEndResult -> mapParser (fun _ -> beforeEndResult) (makeKeywordParser "end"))))))))))))))
+                                                    (fun beforeEndResult -> bindParsers (makeCharParser '\n') (fun _ -> mapParser (fun _ -> beforeEndResult) (makeKeywordParser "end")))))))))))))))
     |> mapParser Condition
     <| input
 
