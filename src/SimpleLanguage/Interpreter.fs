@@ -27,6 +27,7 @@ let rec evaluateExpression (context: Dictionary<_, _>) expression =
         | "<=" -> (<=)
         | "==" -> (=)
         | "!=" -> (<>)
+        | "" -> (=) // Any function can be set here. Reduce will never use it
         | _ -> failwithf $"Unknown comparative symbol {symbol}."
 
     let intMapping =
@@ -57,19 +58,24 @@ let rec evaluateExpression (context: Dictionary<_, _>) expression =
             context[variableName]
         else
             failwithf $"Variable with name {variableName} not declared."
-    | And listOfExpressions -> listOfExpressions |> List.map boolMapping |> List.reduce (&&) |> CustomBox
-    | Or listOfExpressions -> listOfExpressions |> List.map boolMapping |> List.reduce (||) |> CustomBox
+    | And listOfExpressions ->
+        match listOfExpressions with
+        | [ hd ] -> evaluateExpression context hd
+        | _ -> listOfExpressions |> List.map boolMapping |> List.reduce (&&) |> CustomBox
+    | Or listOfExpressions ->
+        match listOfExpressions with
+        | [ hd ] -> evaluateExpression context hd
+        | _ -> listOfExpressions |> List.map boolMapping |> List.reduce (||) |> CustomBox
     | Compare(comparativeSymbol, listOfExpressions) ->
 
-        let rec inner comparativeSymbol (list: int list) =
+        let inner (comparativeSymbol: int -> int -> bool) (list: int list) =
             match list with
-            | hd1 :: hd2 :: [] -> comparativeSymbol hd1 hd2
+            | [ hd ] -> CustomBox hd
+            | [ hd1; hd2 ] -> CustomBox(comparativeSymbol hd1 hd2)
             | _ -> failwith "Expected list of length 2."
 
         try
-            List.map intMapping listOfExpressions
-            |> inner (comparativeSymbolParse comparativeSymbol)
-            |> CustomBox
+            List.map intMapping listOfExpressions |> inner (comparativeSymbolParse comparativeSymbol)
         with _ ->
             List.map boolMapping listOfExpressions
             |> List.reduce (comparativeSymbolParse comparativeSymbol)

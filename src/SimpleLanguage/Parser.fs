@@ -13,9 +13,7 @@ let numberParser =
         (bindParsers (satisfyPredicate (fun x -> List.contains x [ '0' .. '9' ])) (fun digit -> reverseParser [ digit ] (satisfyPredicate (fun x -> List.contains x [ '0' .. '9' ]))))
     |> mapParser (fun res -> res |> Array.ofList |> System.String |> int |> Number)
 
-let booleanParser =
-    makeAlternativeParser (makeKeywordParser "true") (makeKeywordParser "false")
-    |> mapParser (fun res -> Boolean(res = "true"))
+let variableParser = (mapParser Variable stringParser)
 
 let multParser =
     makeListParser (makeAlternativeParser numberParser (mapParser Variable stringParser)) (makeIgnoreParser (makeCharParser '*'))
@@ -31,32 +29,40 @@ let greaterThanOrEqual = makeKeywordParser ">="
 let equalParser = makeKeywordParser "=="
 let notEqualParser = makeKeywordParser "!="
 
-let rec compareParser input =
+let booleanParser =
+    composeAlternativeParser
+        [ (makeAlternativeParser (makeKeywordParser "true") (makeKeywordParser "false")
+           |> mapParser (fun res -> Boolean(res = "true")))
+          variableParser ]
+
+let compareParser =
     let mutable comparisonSymbol = ""
 
     makeListParser
-        addParser
+        (composeAlternativeParser [ booleanParser; addParser ])
         (mapParser (fun result -> comparisonSymbol <- result) (composeAlternativeParser [ lessParser; lessThanOrEqual; greaterParser; greaterThanOrEqual; equalParser; notEqualParser ]))
-    |> mapParser (fun result -> Compare(comparisonSymbol, result))
-    <| input
+    |> mapParser (fun result ->
+        let tmp = comparisonSymbol
+        comparisonSymbol <- ""
+        Compare(tmp, result))
 
 let andParser =
-    makeListParser (makeAlternativeParser booleanParser (mapParser Variable stringParser)) (makeIgnoreParser (makeKeywordParser "and"))
-    |> mapParser And
+    makeListParser compareParser (makeIgnoreParser (makeKeywordParser "&&")) |> mapParser And
 
 let orParser =
-    makeListParser andParser (makeIgnoreParser (makeKeywordParser "or")) |> mapParser Or
+    makeListParser andParser (makeIgnoreParser (makeKeywordParser "||")) |> mapParser Or
+
 
 let assignmentParser =
-    bindParsers stringParser (fun variableName -> bindParsers (makeIgnoreParser (makeCharParser '=')) (fun _ -> mapParser (fun expression -> Assignment(variableName, expression)) addParser))
+    bindParsers stringParser (fun variableName -> bindParsers (makeIgnoreParser (makeCharParser '=')) (fun _ -> mapParser (fun expression -> Assignment(variableName, expression)) orParser))
 
 let printParser =
-    bindParsers (makeKeywordParser "print") (fun _ -> bindParsers (makeCharParser ':') (fun _ -> mapParser Print addParser))
+    bindParsers (makeKeywordParser "print") (fun _ -> bindParsers (makeCharParser ':') (fun _ -> mapParser Print orParser))
 
 let rec conditionParser input =
     bindParsers (makeKeywordParser "if") (fun _ ->
         bindParsers (makeCharParser ':') (fun _ ->
-            bindParsers (makeAlternativeParser orParser compareParser) (fun condition ->
+            bindParsers orParser (fun condition ->
                 mapParser (fun thenAndElseBranchesResult -> condition, thenAndElseBranchesResult)
                 <| bindParsers (makeKeywordParser "then") (fun _ ->
                     bindParsers (makeCharParser ':') (fun _ ->
