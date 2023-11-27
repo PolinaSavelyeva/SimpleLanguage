@@ -7,8 +7,10 @@
     </PropertyGroup>
     <ItemGroup>
         <Compile Include="Generators.fs" />
+        <Compile Include="Helper.fs" />
         <Compile Include="CodeGenerator.fs" />
         <Compile Include="Parser.fs" />
+        <Compile Include="CodeAnalyzer.fs" />
         <Compile Include="Main.fs" />
     </ItemGroup>
     <ItemGroup>

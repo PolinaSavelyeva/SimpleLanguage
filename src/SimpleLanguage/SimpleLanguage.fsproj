@@ -19,6 +19,7 @@
     <Compile Include="AST.fs" />
     <Compile Include="Interpreter.fs" />
     <Compile Include="ParserCombinators.fs" />
+    <Compile Include="CodeAnalyzer.fs" />
     <Compile Include="Parser.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>

@@ -17,18 +17,18 @@ type CustomBox =
     member this.IsInt = this.Type = "int"
     member this.IsBool = this.Type = "bool"
 
-let rec evaluateExpression (context: Dictionary<_, _>) expression =
+let comparativeSymbolParse (symbol: string) =
+    match symbol with
+    | ">" -> (>)
+    | "<" -> (<)
+    | ">=" -> (>=)
+    | "<=" -> (<=)
+    | "==" -> (=)
+    | "!=" -> (<>)
+    | "" -> (=) // Any function can be set here. Reduce will never use it
+    | _ -> failwithf $"Unknown comparative symbol {symbol}."
 
-    let comparativeSymbolParse (symbol: string) =
-        match symbol with
-        | ">" -> (>)
-        | "<" -> (<)
-        | ">=" -> (>=)
-        | "<=" -> (<=)
-        | "==" -> (=)
-        | "!=" -> (<>)
-        | "" -> (=) // Any function can be set here. Reduce will never use it
-        | _ -> failwithf $"Unknown comparative symbol {symbol}."
+let rec evaluateExpression (context: Dictionary<_, _>) expression =
 
     let intMapping =
         (fun expression ->

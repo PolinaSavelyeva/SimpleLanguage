@@ -5,7 +5,7 @@ open Parser
 
 module Main =
 
-    let getProgramAST (program: string) =
+    let generateProgramAST (program: string) =
         (program.ToCharArray() |> List.ofArray |> programParser).Value |> snd
 
     let evaluateProgram (program: string) =
