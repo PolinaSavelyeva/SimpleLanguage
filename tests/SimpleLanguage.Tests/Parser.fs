@@ -15,7 +15,7 @@ let tests =
     testList
         "program parser tests"
         [ testPropertyWithConfig config "AST generated from code is the same as the previous one AST"
-          <| fun (generatedAST: AST) ->
+          <| fun (generatedAST: ASTWrapper) ->
               let code = generateCodeFromAST generatedAST
               let ast = getProgramAST code
               Expect.equal ast generatedAST "Generated ASTs were expected to be equal" ]

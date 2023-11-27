@@ -3,6 +3,8 @@
 open FsCheck
 open SimpleLanguage.AST
 
+type ASTWrapper = AST
+
 let variableNameGen =
     Gen.elements [ "x"; "y"; "z"; "a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"; "i"; "j"; "k"; "l"; "m"; "n"; "o"; "p"; "q"; "r"; "s"; "t"; "u"; "v"; "w" ]
 
@@ -96,4 +98,4 @@ let rec generateCodeFromAST (ast: AST) =
         ast
 
 type Generators =
-    static member AST() = Arb.fromGen astGen
+    static member ASTWrapper() = Arb.fromGen astGen
