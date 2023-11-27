@@ -52,7 +52,6 @@ let andParser =
 let orParser =
     makeListParser andParser (makeIgnoreParser (makeKeywordParser "||")) |> mapParser Or
 
-
 let assignmentParser =
     bindParsers stringParser (fun variableName -> bindParsers (makeIgnoreParser (makeCharParser '=')) (fun _ -> mapParser (fun expression -> Assignment(variableName, expression)) orParser))
 

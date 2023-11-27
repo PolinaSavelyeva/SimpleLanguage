@@ -12,24 +12,25 @@ let comparativeSignGen = Gen.elements [ "<"; "<="; ">"; ">="; "=="; "!=" ]
 
 let variableGen = variableNameGen |> Gen.map Variable
 
-let rec expressionGen depth =
-    Gen.sized (fun size ->
-        if size <= 0 || depth <= 0 then
-            Gen.oneof [ Gen.choose (-100, 100) |> Gen.map Number; Gen.choose (0, 1) |> Gen.map (fun n -> Boolean(n = 0)); variableGen ]
-        else
-            Gen.oneof
-                [ Gen.choose (-100, 100) |> Gen.map Number
-                  Gen.choose (0, 1) |> Gen.map (fun n -> Boolean(n = 0))
-                  variableGen
-                  Gen.listOf (expressionGen (depth - 1)) |> Gen.map Mult
-                  Gen.listOf (expressionGen (depth - 1)) |> Gen.map Add
-                  Gen.listOf (expressionGen (depth - 1)) |> Gen.map And
-                  Gen.listOf (expressionGen (depth - 1)) |> Gen.map Or
-                  Gen.map2 (fun comparativeSign lst -> Compare(comparativeSign, lst)) comparativeSignGen (Gen.listOf (expressionGen (depth - 1))) ])
+let rec numberGen = Gen.choose (0, 100) |> Gen.map Number
 
-let rec statementGen depth =
+let rec booleanGen = Gen.choose (0, 1) |> Gen.map (fun n -> Boolean(n = 0))
+
+let rec multGen =
+    Gen.nonEmptyListOf (Gen.oneof [ variableGen; numberGen ]) |> Gen.map Mult
+
+let rec addGen = Gen.nonEmptyListOf multGen |> Gen.map Add
+
+let rec compareGen =
+    Gen.map (fun expression -> Compare("", expression)) (Gen.listOfLength 1 booleanGen)
+
+let rec andGen = Gen.nonEmptyListOf compareGen |> Gen.map And
+
+let rec orGen = Gen.nonEmptyListOf andGen |> Gen.map Or
+
+let rec statementGen input =
     Gen.sized (fun size ->
-        if size <= 0 || depth <= 0 then
+        if size <= 0 then
             Gen.oneof
                 [ Gen.map2
                       (fun variableName expression -> Assignment(variableName, expression))
@@ -39,8 +40,8 @@ let rec statementGen depth =
                               | Variable name -> name
                               | _ -> failwith "Variable was expected here.")
                           variableGen)
-                      (expressionGen depth)
-                  expressionGen depth |> Gen.map Print ]
+                      orGen
+                  orGen |> Gen.map Print ]
         else
             Gen.oneof
                 [ Gen.map2
@@ -51,17 +52,17 @@ let rec statementGen depth =
                               | Variable name -> name
                               | _ -> failwith "Variable was expected here.")
                           variableGen)
-                      (expressionGen depth)
-                  expressionGen depth |> Gen.map Print
+                      orGen
+                  orGen |> Gen.map Print
                   Gen.map2
                       (fun expression branches -> Condition(expression, branches))
-                      (expressionGen (depth - 1))
-                      (Gen.map2 (fun trueBranch elseBranch -> (trueBranch, elseBranch)) (Gen.listOf (statementGen (depth - 1))) (Gen.listOf (statementGen (depth - 1)))) ])
+                      orGen
+                      (Gen.map2 (fun trueBranch elseBranch -> (trueBranch, elseBranch)) (Gen.nonEmptyListOf (statementGen <| input)) (Gen.nonEmptyListOf (statementGen <| input))) ])
 
 let astGen =
     gen {
         let! depth = Gen.choose (1, 5)
-        return! Gen.listOf (statementGen depth)
+        return! Gen.nonEmptyListOf (statementGen depth)
     }
 
 let rec generateCodeFromAST (ast: AST) =

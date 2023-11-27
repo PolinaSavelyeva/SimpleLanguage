@@ -1,9 +1,9 @@
 module SimpleLanguage.Tests.Parser
 
 open Expecto
-open SimpleLanguage.AST
 open Generators
 open SimpleLanguage.Main
+open SimpleLanguage.AST
 
 let config =
     { FsCheckConfig.defaultConfig with
@@ -18,4 +18,14 @@ let tests =
           <| fun (generatedAST: ASTWrapper) ->
               let code = generateCodeFromAST generatedAST
               let ast = getProgramAST code
-              Expect.equal ast generatedAST "Generated ASTs were expected to be equal" ]
+              Expect.equal ast generatedAST "ASTs were expected to be equal"
+
+          testCase "AST generated from simple print-command-code is the same as expected one"
+          <| fun _ ->
+              let code = "print:x<true"
+              let ast = getProgramAST code
+
+              let expectedAST =
+                  [ Print(Or [ And [ Compare("<", [ Variable "x"; Boolean true ]) ] ]) ]
+
+              Expect.equal ast expectedAST "ASTs were expected to be equal" ]
