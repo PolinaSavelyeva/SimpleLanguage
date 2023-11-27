@@ -28,4 +28,17 @@ let tests =
               let expectedAST =
                   [ Print(Or [ And [ Compare("<", [ Variable "x"; Boolean true ]) ] ]) ]
 
+              Expect.equal ast expectedAST "ASTs were expected to be equal"
+          testCase "AST generated from simple assignment-command-code is the same as expected one"
+          <| fun _ ->
+              let code = "x=true&&false<false"
+              let ast = getProgramAST code
+
+              let expectedAST = [Assignment
+                       ("x",
+                        Or
+                          [And
+                             [Compare ("<", [Boolean true]);
+                              Compare ("", [Boolean false; Boolean false])]])]
+
               Expect.equal ast expectedAST "ASTs were expected to be equal" ]
