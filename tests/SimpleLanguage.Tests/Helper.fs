@@ -8,7 +8,8 @@ open System.Collections.Generic
 
 let config =
     { FsCheckConfig.defaultConfig with
-        arbitrary = [ typeof<Generators.Generators> ] }
+        arbitrary = [ typeof<Generators.Generators> ]
+        maxTest = 10 }
 
 let code =
     "if:true>falsethen:

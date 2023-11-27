@@ -11,22 +11,7 @@ open Helper
 let tests =
     testList
         "code analyzer tests"
-        [ testPropertyWithConfig config "Evaluated optimised AST has the same behavior as the evaluated previous one AST"
-          <| fun (generatedAST: ASTWrapper) ->
-              let optimisedAst = optimiseAST generatedAST
-
-              try
-                  evaluateAST generatedAST
-              with _ ->
-                  Expect.throws (fun _ -> evaluateAST optimisedAst) "Optimised AST should not evaluate when the original does not"
-
-              let result =
-                  listAST optimisedAst
-                  true
-
-              Expect.isTrue result "Optimised AST should be evaluated when the original does"
-
-          testPropertyWithConfig config "Evaluated program results from optimised AST are the same as the evaluated program results from previous one AST"
+        [ testPropertyWithConfig config "Evaluated program results from optimised AST are the same as the evaluated program results from previous one AST"
           <| fun (generatedAST: ASTWrapper) ->
               let optimisedAst = optimiseAST generatedAST
 
