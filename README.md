@@ -17,7 +17,7 @@ end
 ```
 
 where
-- `<condition>` represents a boolean expression which contains operators such as `<`, `&&`, boolean variables [etc]((#logical-expressions).
+- `<condition>` represents a boolean expression which contains operators such as `<`, `&&`, boolean variables [etc](#logical-expressions).
 - `<statements>` could be one or more statements e.g [print](#print-statement), [variable assignment](#variable-assignment) or other if statements. Make sure there are no tabs between the if-else construction and the statements. Line breaks are also required, as they appeared on the code-syntax block.
 
 ### Variable Assignment
