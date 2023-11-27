@@ -8,7 +8,7 @@ This repository contains simple programming language with parser, interpreter an
 
 The syntax for the `if` statement is as follows,
 
-```sh
+```fsharp
 if:<condition>then:
 <statements>
 else:
@@ -24,7 +24,7 @@ where
 
 The syntax for variable assignments is as follows,
 
-```
+```fsharp
 <variableName>=<expression>
 ```
 
@@ -36,7 +36,7 @@ where
 
 The syntax for the `print` statement is as follows,
 
-```sh
+```fsharp
 print:<expression>
 ```
 
@@ -67,7 +67,7 @@ Arithmetic expressions can be used in every statement. The supported operators a
 
 Here are some examples of code written in this language:
 
-```sh
+```fsharp
 if:true>falsethen:
 x=true
 print:x<false
